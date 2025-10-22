@@ -1,0 +1,44 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build artifacts
+bin/
+obj/
+out/
+debug/
+release/
+
+# Packages
+*.nupkg
+*.snupkg
+*.nuspec
+
+# Logs
+*.log
+Logs/
+
+# Data and uploads
+data/
+uploads/
+*.csv
+*.xlsx
+
+# Secrets
+secrets.json
+appsettings.Development.json
+
+# System
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# JetBrains
+.idea/
+*.iml
+
+# OS junk
+.DS_Store
