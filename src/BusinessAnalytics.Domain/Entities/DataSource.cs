@@ -17,5 +17,6 @@ namespace BusinessAnalytics.Domain.Entities
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
         public ICollection<RawImport> Imports { get; set; } = new List<RawImport>();
+        public ICollection<FactSales> FactSales { get; set; } = new List<FactSales>(); // NEW
     }
 }

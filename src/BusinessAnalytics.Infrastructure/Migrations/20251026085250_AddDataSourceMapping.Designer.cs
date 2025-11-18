@@ -4,6 +4,7 @@ using BusinessAnalytics.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessAnalytics.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251026085250_AddDataSourceMapping")]
+    partial class AddDataSourceMapping
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -163,30 +166,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
                     b.ToTable("DataSourceMappings");
                 });
 
-            modelBuilder.Entity("BusinessAnalytics.Domain.Entities.DimCustomer", b =>
-                {
-                    b.Property<int>("CustomerKey")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerKey"));
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Region")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("CustomerKey");
-
-                    b.ToTable("DimCustomers");
-                });
-
             modelBuilder.Entity("BusinessAnalytics.Domain.Entities.DimDate", b =>
                 {
                     b.Property<int>("DateKey")
@@ -218,82 +197,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
                     b.HasKey("DateKey");
 
                     b.ToTable("DimDates");
-                });
-
-            modelBuilder.Entity("BusinessAnalytics.Domain.Entities.DimProduct", b =>
-                {
-                    b.Property<int>("ProductKey")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductKey"));
-
-                    b.Property<string>("Category")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("SubCategory")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ProductKey");
-
-                    b.ToTable("DimProducts");
-                });
-
-            modelBuilder.Entity("BusinessAnalytics.Domain.Entities.FactSales", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("CustomerKey")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DataSourceId")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<int>("DateKey")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("DimCustomerCustomerKey")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("DimProductProductKey")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductKey")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerKey");
-
-                    b.HasIndex("DataSourceId");
-
-                    b.HasIndex("DateKey");
-
-                    b.HasIndex("DimCustomerCustomerKey");
-
-                    b.HasIndex("DimProductProductKey");
-
-                    b.HasIndex("ProductKey");
-
-                    b.ToTable("FactSales");
                 });
 
             modelBuilder.Entity("BusinessAnalytics.Domain.Entities.RawImport", b =>
@@ -488,49 +391,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
                     b.Navigation("DataSource");
                 });
 
-            modelBuilder.Entity("BusinessAnalytics.Domain.Entities.FactSales", b =>
-                {
-                    b.HasOne("BusinessAnalytics.Domain.Entities.DimCustomer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerKey")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessAnalytics.Domain.Entities.DataSource", "DataSource")
-                        .WithMany("FactSales")
-                        .HasForeignKey("DataSourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BusinessAnalytics.Domain.Entities.DimDate", "DimDate")
-                        .WithMany()
-                        .HasForeignKey("DateKey")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessAnalytics.Domain.Entities.DimCustomer", null)
-                        .WithMany("Sales")
-                        .HasForeignKey("DimCustomerCustomerKey");
-
-                    b.HasOne("BusinessAnalytics.Domain.Entities.DimProduct", null)
-                        .WithMany("Sales")
-                        .HasForeignKey("DimProductProductKey");
-
-                    b.HasOne("BusinessAnalytics.Domain.Entities.DimProduct", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductKey")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("DataSource");
-
-                    b.Navigation("DimDate");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("BusinessAnalytics.Domain.Entities.RawImport", b =>
                 {
                     b.HasOne("BusinessAnalytics.Domain.Entities.DataSource", "DataSource")
@@ -595,19 +455,7 @@ namespace BusinessAnalytics.Infrastructure.Migrations
 
             modelBuilder.Entity("BusinessAnalytics.Domain.Entities.DataSource", b =>
                 {
-                    b.Navigation("FactSales");
-
                     b.Navigation("Imports");
-                });
-
-            modelBuilder.Entity("BusinessAnalytics.Domain.Entities.DimCustomer", b =>
-                {
-                    b.Navigation("Sales");
-                });
-
-            modelBuilder.Entity("BusinessAnalytics.Domain.Entities.DimProduct", b =>
-                {
-                    b.Navigation("Sales");
                 });
 #pragma warning restore 612, 618
         }

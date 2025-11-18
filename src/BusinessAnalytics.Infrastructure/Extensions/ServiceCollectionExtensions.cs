@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using BusinessAnalytics.Infrastructure.Files;
+using Microsoft.Extensions.Options;
+using BusinessAnalytics.Infrastructure.Parsing;
 
 namespace BusinessAnalytics.Infrastructure.Extensions
 {
@@ -27,6 +30,14 @@ namespace BusinessAnalytics.Infrastructure.Extensions
                 .AddEntityFrameworkStores<AppDbContext>();
 
             services.AddAutoMapper(cfg=> { },typeof(ServiceCollectionExtensions).Assembly);
+
+            services.Configure<UploadOptions>(config.GetSection("Uploads"));
+            services.AddSingleton<IFileStorage, LocalFileStorage>();
+
+            services.AddScoped<BusinessAnalytics.Infrastructure.Parsing.Preview.IPreviewService,
+                   BusinessAnalytics.Infrastructure.Parsing.Preview.PreviewService>();
+
+            services.AddScoped<ISalesParser, SalesParser>();
 
             return services;
         }

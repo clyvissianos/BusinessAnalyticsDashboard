@@ -4,6 +4,7 @@ using BusinessAnalytics.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessAnalytics.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251117164106_AddSalesModel")]
+    partial class AddSalesModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -258,9 +261,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
                     b.Property<int>("CustomerKey")
                         .HasColumnType("int");
 
-                    b.Property<int>("DataSourceId")
-                        .HasColumnType("int");
-
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
@@ -282,8 +282,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerKey");
-
-                    b.HasIndex("DataSourceId");
 
                     b.HasIndex("DateKey");
 
@@ -496,12 +494,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("BusinessAnalytics.Domain.Entities.DataSource", "DataSource")
-                        .WithMany("FactSales")
-                        .HasForeignKey("DataSourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("BusinessAnalytics.Domain.Entities.DimDate", "DimDate")
                         .WithMany()
                         .HasForeignKey("DateKey")
@@ -523,8 +515,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
-
-                    b.Navigation("DataSource");
 
                     b.Navigation("DimDate");
 
@@ -595,8 +585,6 @@ namespace BusinessAnalytics.Infrastructure.Migrations
 
             modelBuilder.Entity("BusinessAnalytics.Domain.Entities.DataSource", b =>
                 {
-                    b.Navigation("FactSales");
-
                     b.Navigation("Imports");
                 });
 
