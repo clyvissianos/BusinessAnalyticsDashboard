@@ -18,11 +18,13 @@ namespace BusinessAnalytics.Api.Controllers.v1
     {
         private readonly AppDbContext _db;
         private readonly ISalesAnalyticsService _svc;
+        private readonly ILogger<SalesAnalyticsController> _logger;
 
-        public SalesAnalyticsController(AppDbContext db, ISalesAnalyticsService svc)
+        public SalesAnalyticsController(AppDbContext db, ISalesAnalyticsService svc, ILogger<SalesAnalyticsController> logger)
         {
             _db = db;
             _svc = svc;
+            _logger = logger;
         }
 
         private string CurrentUserId =>
@@ -115,6 +117,39 @@ namespace BusinessAnalytics.Api.Controllers.v1
 
             var result = await _svc.GetGroupedAsync(dataSourceId, dimension, from, to, ct);
             return Ok(result);
+        }
+
+        [HttpGet("{dataSourceId:int}/dashboard")]
+        public async Task<IActionResult> GetDashboard(
+        int dataSourceId,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
+        [FromQuery] int topProducts = 5,
+        [FromQuery] int topCustomers = 5,
+        CancellationToken ct = default)
+        {
+            // Ownership should already be enforced by how you choose the datasource;
+            // if you have a DataSourceService, you can add an ownership check here.
+            _logger.LogInformation("Dashboard requested for DataSource {Id} by {User}",
+                dataSourceId, User.Identity?.Name ?? "anonymous");
+
+            try
+            {
+                var dashboard = await _svc.GetDashboardAsync(
+                dataSourceId,
+                from,
+                to,
+                topProducts,
+                topCustomers,
+                ct);
+
+                return Ok(dashboard);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving dashboard for DataSource {Id}", dataSourceId);
+                return StatusCode(500, new { error = "Internal server error" });
+            }
         }
     }
 }

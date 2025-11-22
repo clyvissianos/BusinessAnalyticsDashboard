@@ -99,10 +99,11 @@ public class SalesParser : ISalesParser
                             qty = 1;
                         //throw new FormatException($"Invalid Quantity: '{qtyVal}'");
                     }
-                    if (!decimal.TryParse(amountVal, NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
+
+                    // Try culture first (el-GR by default), then invariant as fallback
+                    if (!decimal.TryParse(amountVal, NumberStyles.Any, culture, out var amount))
                     {
-                        // fallback for Greek users who may upload comma-based values
-                        if (!decimal.TryParse(amountVal, NumberStyles.Any, culture, out amount))
+                        if (!decimal.TryParse(amountVal, NumberStyles.Any, CultureInfo.InvariantCulture, out amount))
                             throw new FormatException($"Invalid Amount: '{amountVal}'");
                     }
 
@@ -135,7 +136,8 @@ public class SalesParser : ISalesParser
             await _db.SaveChangesAsync(ct);
 
             // Decide success vs fail by error rate (tolerate a few)
-            var rate = rows == 0 ? 1.0 : (double)errCount / rows;
+            var totalRows = rows + errCount;
+            var rate = totalRows == 0 ? 1.0 : (double)errCount / totalRows;
             if (rate > 0.05) // >5% errors → fail
             {
                 var msg = $"Parsing aborted. Error rate {(rate * 100):0.0}% (rows={rows}, errors={errCount}). " +

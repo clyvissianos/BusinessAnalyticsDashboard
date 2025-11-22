@@ -1,13 +1,14 @@
-﻿using System.Text;
+﻿using BusinessAnalytics.Api;
+using BusinessAnalytics.Application.Analytics;
+using BusinessAnalytics.Infrastructure.Analytics;
 using BusinessAnalytics.Infrastructure.Extensions;
+using BusinessAnalytics.Infrastructure.Parsing;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Reflection;
-using BusinessAnalytics.Application.Analytics;
-using BusinessAnalytics.Infrastructure.Analytics;
-using BusinessAnalytics.Infrastructure.Parsing;
+using System.Text;
 
 
 // ✅ Register ExcelDataReader encodings ONCE before anything else
@@ -55,7 +56,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // Controllers & Swagger
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddApplicationPart(typeof(ApiAssemblyMarker).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<ISalesAnalyticsService, SalesAnalyticsService>();
 builder.Services.AddScoped<ISalesParser, SalesParser>();
@@ -108,8 +111,11 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Migrate & seed
-await app.Services.EnsureDatabaseSeededAsync();
+// Migrate & seed only outside integration tests
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    await app.Services.EnsureDatabaseSeededAsync();
+}
 
 // Pipeline
 if (app.Environment.IsDevelopment())
@@ -147,3 +153,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make the implicit Program class public so integration tests can access it
+public partial class Program { }

@@ -4,6 +4,7 @@ using BusinessAnalytics.Infrastructure.Persistence; // adjust namespace to your 
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,11 +31,15 @@ namespace BusinessAnalytics.Infrastructure.Analytics
         {
             var query = FilterFactSales(dataSourceId, from, to);
 
-            // All of this runs in SQL
-            var total = await query.SumAsync(x => (decimal?)x.Amount, ct) ?? 0m;
-            var min = await query.MinAsync(x => (decimal?)x.Amount, ct) ?? 0m;
-            var max = await query.MaxAsync(x => (decimal?)x.Amount, ct) ?? 0m;
+            // Aggregate in SQL as double (SQLite-friendly), then cast back
+            var totalDouble = await query.SumAsync(x => (double?)x.Amount, ct) ?? 0d;
+            var minDouble = await query.MinAsync(x => (double?)x.Amount, ct) ?? 0d;
+            var maxDouble = await query.MaxAsync(x => (double?)x.Amount, ct) ?? 0d;
             var count = await query.LongCountAsync(ct);
+
+            var total = (decimal)totalDouble;
+            var min = (decimal)minDouble;
+            var max = (decimal)maxDouble;
             var avg = count > 0 ? total / count : 0m;
 
             return new SalesSummaryDto(total, avg, min, max, count);
@@ -58,7 +63,7 @@ namespace BusinessAnalytics.Infrastructure.Analytics
                 {
                     g.Key.Year,
                     g.Key.Month,
-                    Total = g.Sum(x => x.Amount)
+                    Total = g.Sum(x => (double)x.Amount)   // <-- double
                 };
 
             var data = await query.ToListAsync(ct);
@@ -67,7 +72,7 @@ namespace BusinessAnalytics.Infrastructure.Analytics
                 .Select(x =>
                     new TimeSeriesPointDto(
                         new DateOnly(x.Year, x.Month, 1),
-                        x.Total))
+                        (decimal)x.Total))
                 .ToList();
         }
 
@@ -87,10 +92,10 @@ namespace BusinessAnalytics.Infrastructure.Analytics
                 from fs in FilterFactSales(dataSourceId, startDate, endDate)
                 join p in _db.DimProducts on fs.ProductKey equals p.ProductKey
                 group fs by p.ProductName into g
-                orderby g.Sum(x => x.Amount) descending
+                orderby g.Sum(x => (double)x.Amount) descending
                 select new CategoryPointDto(
                     g.Key,
-                    g.Sum(x => x.Amount));
+                    (decimal)g.Sum(x => (double)x.Amount));
 
             return await query.Take(top).ToListAsync(ct);
         }
@@ -111,10 +116,10 @@ namespace BusinessAnalytics.Infrastructure.Analytics
                 from fs in FilterFactSales(dataSourceId, startDate, endDate)
                 join c in _db.DimCustomers on fs.CustomerKey equals c.CustomerKey
                 group fs by c.CustomerName into g
-                orderby g.Sum(x => x.Amount) descending
+                orderby g.Sum(x => (double)x.Amount) descending
                 select new CategoryPointDto(
                     g.Key,
-                    g.Sum(x => x.Amount));
+                    (decimal)g.Sum(x => (double)x.Amount));
 
             return await query.Take(top).ToListAsync(ct);
         }
@@ -151,10 +156,36 @@ namespace BusinessAnalytics.Infrastructure.Analytics
                 orderby g.Key
                 select new CategoryPointDto(
                     g.Key.ToString("yyyy-MM-dd"),
-                    g.Sum(x => x.Amount));
+                    (decimal)g.Sum(x => (double)x.Amount));
 
             return await query.ToListAsync(ct);
         }
+
+        // ----------------------
+        //  Dashboard
+        // ----------------------
+
+        public async Task<SalesDashboardDto> GetDashboardAsync(
+            int dataSourceId,
+            DateOnly? from,
+            DateOnly? to,
+            int topProducts = 5,
+            int topCustomers = 5,
+            CancellationToken ct = default)
+        {
+            // One place to orchestrate all analytics calls
+            var summary = await GetSummaryAsync(dataSourceId, from, to, ct);
+            var monthlyTrend = await GetMonthlyTrendAsync(dataSourceId, from, to, ct);
+            var topProds = await GetTopProductsAsync(dataSourceId, topProducts, from, to, ct);
+            var topCusts = await GetTopCustomersAsync(dataSourceId, topCustomers, from, to, ct);
+
+            return new SalesDashboardDto(
+                summary,
+                monthlyTrend,
+                topProds,
+                topCusts);
+        }
+
 
         // ----------------------
         //  Shared filter

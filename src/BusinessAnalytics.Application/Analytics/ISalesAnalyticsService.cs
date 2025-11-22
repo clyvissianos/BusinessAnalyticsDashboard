@@ -39,6 +39,14 @@ namespace BusinessAnalytics.Application.Analytics
             DateOnly? from,
             DateOnly? to,
             CancellationToken ct = default);
+
+        Task<SalesDashboardDto> GetDashboardAsync(
+            int dataSourceId,
+            DateOnly? from,
+            DateOnly? to,
+            int topProducts = 5,
+            int topCustomers = 5,
+            CancellationToken ct = default);
     }
 }
 
